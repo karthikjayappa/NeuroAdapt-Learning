@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuroAdapt Edu | Adaptive Learning</title>
+    <!-- Link to CSS -->
+    <link rel="stylesheet" href="style.css">
+    <!-- Google Fonts for better readability -->
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- Header / Navigation Bar -->
+    <header class="main-header">
+        <div class="container nav-container">
+            <div class="logo">
+                <h1>NeuroAdapt Edu</h1>
+            </div>
+            <button class="mobile-menu-btn" aria-label="Toggle navigation">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <nav class="main-nav">
+                <ul>
+                    <li><a href="#home">Home</a></li>
+                    <li><a href="#about">About</a></li>
+                    <li><a href="#features">Features</a></li>
+                    <li><a href="#how-it-works">How It Works</a></li>
+                    <li><a href="#contact">Contact</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <!-- Hero Section -->
+        <section id="home" class="hero-section">
+            <div class="container hero-content">
+                <h2>Learning that Adapts to Every Mind</h2>
+                <p>We believe education should fit the learner, not the other way around. Our platform creates a distraction-free, adaptive environment specifically designed for neurodivergent students.</p>
+                <a href="#contact" class="btn-primary">Get Started</a>
+            </div>
+        </section>
+
+        <!-- About Section -->
+        <section id="about" class="about-section">
+            <div class="container">
+                <h3>Why NeuroAdapt?</h3>
+                <p>Traditional learning platforms often overwhelm students with clutter, complex navigation, and rigid structures. This causes cognitive overload, making it difficult for students with ADHD, Dyslexia, and other learning differences to focus and retain information.</p>
+                <p>NeuroAdapt Edu removes the barriers. We simplify the interface and adapt the content delivery to match your unique cognitive style, ensuring learning is accessible and stress-free.</p>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section id="features" class="features-section">
+            <div class="container">
+                <h3>Key Features</h3>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <h4>Adaptive Content</h4>
+                        <p>Text and media are automatically simplified and restructured for easier comprehension.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>Focus-Friendly UI</h4>
+                        <p>A minimalist interface that hides distractions and highlights only what matters.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>Dyslexia Support</h4>
+                        <p>Includes OpenDyslexic-style fonts, high-contrast modes, and adjustable spacing.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>Personalized Settings</h4>
+                        <p>Adjust font size, background colors, and audio speeds to suit your specific needs.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- How It Works Section -->
+        <section id="how-it-works" class="how-it-works-section">
+            <div class="container">
+                <h3>How It Works</h3>
+                <div class="steps-container">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <h4>Upload Content</h4>
+                        <p>Upload PDFs, notes, or select from our library of educational materials.</p>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <h4>System Analysis</h4>
+                        <p>Our AI analyzes the complexity and structure of the material.</p>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <h4>Adaptation</h4>
+                        <p>Content is simplified, chunked, and formatted for optimal retention.</p>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">4</div>
+                        <h4>Personalized Learning</h4>
+                        <p>Access the material in your custom, distraction-free interface.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Section -->
+        <section id="contact" class="contact-section">
+            <div class="container">
+                <h3>Contact Us</h3>
+                <p>Have questions? We'd love to hear from you.</p>
+                <form class="contact-form" id="contactForm">
+                    <div class="form-group">
+                        <label for="name">Name</label>
+                        <input type="text" id="name" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="message">Message</label>
+                        <textarea id="message" name="message" rows="5" required></textarea>
+                    </div>
+                    <button type="submit" class="btn-primary">Send Message</button>
+                </form>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="main-footer">
+        <div class="container">
+            <p>&copy; 2023 NeuroAdapt Edu. All rights reserved.</p>
+            <div class="social-links">
+                <a href="#">Twitter</a>
+                <a href="#">LinkedIn</a>
+                <a href="#">Instagram</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Link to JavaScript -->
+    <script src="script.js"></script>
+</body>
+</html>
