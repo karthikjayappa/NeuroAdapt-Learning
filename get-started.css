@@ -1,0 +1,98 @@
+/* --- CSS STYLES --- */
+
+:root {
+    --bg-color: #f4f9fc; /* Soft pastel blue background */
+    --card-bg: #ffffff;
+    --text-color: #333333;
+    --accent-color: #5d9cec; /* Calming blue */
+    --input-border: #dceefc;
+    --focus-color: #4a89dc;
+    --success-color: #8cc152;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    line-height: 1.6;
+    font-size: 18px; /* Large readable font */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    background-color: var(--card-bg);
+    width: 100%;
+    max-width: 700px;
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+h1 {
+    text-align: center;
+    color: var(--text-color);
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.intro-text {
+    text-align: center;
+    color: #666;
+    margin-bottom: 30px;
+    font-size: 1.1rem;
+}
+
+.form-group {
+    margin-bottom: 25px;
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #444;
+}
+
+/* Input Styling */
+input[type="text"],
+input[type="number"],
+textarea {
+    width: 100%;
+    padding: 15px;
+    border: 2px solid var(--input-border);
+    border-radius: 12px;
+    font-size: 1rem;
+    font-family: inherit;
+    transition: border-color 0.3s ease;
+    background-color: #fafafa;
+}
+
+input:focus, textarea:focus {
+    outline: none;
+    border-color: var(--focus-color);
+    background-color: #fff;
+}
+
+/* Checkbox & Radio Styling */
+.options-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.option-item {
+    display: flex;
+    align-items: center;
+    background-color: #f9fbfd;
+    padding: 12px
+}
