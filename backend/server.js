@@ -1,12 +1,12 @@
 // ============================================
-// NeuroAdapt Edu - Backend Server (Google Gemini)
+// NeuroAdapt Edu - Backend Server (Ollama AI)
 // ============================================
 
 // Import required modules
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const axios = require('axios');
+const { exec } = require('child_process');
 
 // Load environment variables from .env file
 dotenv.config();
@@ -32,20 +32,35 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // ============================================
-// Google Gemini API Configuration
+// Ollama AI Helper Function
 // ============================================
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-// ✅ CORRECT MODEL NAME (not -latest)
-const GEMINI_URL = "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent?key=" + GEMINI_API_KEY;
+/**
+ * Call Ollama AI locally using CLI
+ * @param {string} prompt - The text prompt to send to the model
+ * @returns {Promise<string>} - AI generated response
+ */
+function callOllama(prompt) {
+    return new Promise((resolve, reject) => {
+        // Replace quotes to avoid CLI issues
+        const command = `ollama run ${process.env.LLM_MODEL} "${prompt.replace(/"/g, '\\"')}"`;
+
+        exec(command, { maxBuffer: 1024 * 1024 * 10 }, (error, stdout, stderr) => {
+            if (error) return reject(error);
+            if (stderr) console.error('Ollama STDERR:', stderr);
+            resolve(stdout);
+        });
+    });
+}
+
 // ============================================
 // API Endpoints
 // ============================================
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-    res.json({ 
-        status: 'OK', 
+    res.json({
+        status: 'OK',
         message: 'NeuroAdapt Edu API is running',
         timestamp: new Date().toISOString()
     });
@@ -65,63 +80,39 @@ app.post('/api/analyze', async (req, res) => {
             });
         }
 
-        // Limit text length to avoid API limits
-        const maxTextLength = 10000;
-        const truncatedText = text.length > maxTextLength 
-            ? text.substring(0, maxTextLength) + '\n... (content truncated for API limit)'
+        // Limit text length to avoid processing overload
+        const maxTextLength = process.env.MAX_TEXT_LENGTH || 10000;
+        const truncatedText = text.length > maxTextLength
+            ? text.substring(0, maxTextLength) + '\n... (content truncated)'
             : text;
 
-        // Create the prompt for Google Gemini
+        // Create the prompt for Ollama
         const prompt = `
-        Analyze the following study material and convert it into:
-        
-        1. Easy-to-understand bullet point notes (keep it simple and student-friendly)
-        2. A short summary paragraph of the main concepts
-        
-        Make the explanations simple and easy to understand.
-        Only use the content from the PDF provided.
-        
-        Study Material:
-        ${truncatedText}
-        `;
+Analyze the following study material and convert it into:
 
-        // Call Google Gemini API
-        const response = await axios.post(GEMINI_URL, {
-            contents: [{
-                parts: [{
-                    text: prompt
-                }]
-            }],
-            generationConfig: {
-                temperature: 0.7,
-                topK: 40,
-                topP: 0.95,
-                maxOutputTokens: 2048
-            }
-        });
+1. Easy-to-understand bullet point notes (student-friendly)
+2. Short summary paragraph of main concepts
 
-        // Extract the response content
-        let aiResponse = response.data.candidates[0].content.parts[0].text;
+Keep explanations simple and clear.
+Only use the content provided below.
+
+Study Material:
+${truncatedText}
+`;
+
+        // Call Ollama AI
+        const aiResponse = await callOllama(prompt);
 
         // Return the response to frontend
         res.json({
             success: true,
             data: aiResponse,
-            message: 'Analysis completed successfully'
+            message: 'Analysis completed successfully using Ollama AI'
         });
 
     } catch (error) {
         console.error('Server Error:', error);
-        
-        // Handle Google Gemini API errors
-        if (error.response) {
-            return res.status(error.response.status).json({
-                error: 'Google Gemini API Error',
-                message: error.response.data?.error?.message || 'Unknown API error'
-            });
-        }
-        
-        // Handle other errors
+
         res.status(500).json({
             error: 'Server Error',
             message: error.message || 'An unexpected error occurred'
@@ -158,19 +149,19 @@ const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
     console.log(`
-    ╔═══════════════════════════════════════════════════════════╗
-    ║                                                           ║
-    ║   NeuroAdapt Edu Backend Server                           ║
-    ║                                                           ║
-    ║   Server running on port ${PORT}                            ║
-    ║   Environment: ${process.env.NODE_ENV || 'development'}              ║
-    ║                                                           ║
-    ║   API Endpoints:                                          ║
-    ║   - GET  /api/health                                      ║
-    ║   - POST /api/analyze                                     ║
-    ║                                                           ║
-    ╚═══════════════════════════════════════════════════════════╝
-    `);
+╔═══════════════════════════════════════════════════════════╗
+║                                                           ║
+║   NeuroAdapt Edu Backend Server (Ollama AI)              ║
+║                                                           ║
+║   Server running on port ${PORT}                            ║
+║   Environment: ${process.env.NODE_ENV || 'development'}              ║
+║                                                           ║
+║   API Endpoints:                                          ║
+║   - GET  /api/health                                      ║
+║   - POST /api/analyze                                     ║
+║                                                           ║
+╚═══════════════════════════════════════════════════════════╝
+`);
 });
 
 // Graceful shutdown
