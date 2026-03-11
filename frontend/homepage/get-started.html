@@ -1,81 +1,169 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tell Us About Your Learning Needs - NeuroAdapt Edu</title>
-    <!-- Link to CSS -->
-    <link rel="stylesheet" href="get-started.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Tell Us About Your Learning Needs - NeuroAdapt Edu</title>
+
+<!-- CSS -->
+<link rel="stylesheet" href="get-started.css">
+
 </head>
+
 <body>
 
-    <div class="container">
-        <header>
-            <h1>Tell Us About Your Learning Needs</h1>
-            <p class="intro">
-                NeuroAdapt Edu helps you study smarter. Upload your learning material and select your specific needs so we can tailor the analysis just for you.
-            </p>
-        </header>
+<div class="container">
 
-        <form id="needsForm">
-            <!-- Student Details -->
-            <div class="form-group">
-                <label for="studentName">Student Name</label>
-                <input type="text" id="studentName" name="studentName" placeholder="Enter your name" required>
-            </div>
+<header>
+<h1>Tell Us About Your Learning Needs</h1>
 
-            <div class="form-group">
-                <label for="age">Age</label>
-                <input type="number" id="age" name="age" min="5" max="100" placeholder="e.g. 12" required>
-            </div>
+<p class="intro">
+NeuroAdapt Edu helps you study smarter. Upload your learning material and select your specific needs so we can tailor the analysis just for you.
+</p>
 
-            <!-- Learning Difficulties -->
-            <div class="form-group">
-                <label>Learning Difficulties (Select all that apply)</label>
-                <div class="checkbox-group">
-                    <label class="checkbox-label">
-                        <input type="checkbox" name="difficulty" value="ADHD">
-                        <span>ADHD (Difficulty focusing)</span>
-                    </label>
-                    <label class="checkbox-label">
-                        <input type="checkbox" name="difficulty" value="Dyslexia">
-                        <span>Dyslexia (Reading difficulty)</span>
-                    </label>
-                    <label class="checkbox-label">
-                        <input type="checkbox" name="difficulty" value="SlowReading">
-                        <span>Slow Reading Speed</span>
-                    </label>
-                    <label class="checkbox-label">
-                        <input type="checkbox" name="difficulty" value="LongText">
-                        <span>Difficulty Understanding Long Text</span>
-                    </label>
-                </div>
-            </div>
+</header>
 
-            <!-- PDF Upload -->
-            <div class="form-group">
-                <label for="pdfUpload">Upload Learning Material (PDF)</label>
-                <input type="file" id="pdfUpload" name="pdfUpload" accept=".pdf" required>
-                <small id="file-name-display">No file chosen</small>
-            </div>
 
-            <!-- Submit Button -->
-            <button type="submit" id="analyzeBtn">Analyze</button>
-        </form>
+<form id="needsForm">
 
-        <!-- Results Area (Hidden by default) -->
-        <div id="results-area" class="hidden">
-            <h2>Your Personalized Analysis</h2>
-            <div id="loading-spinner" class="hidden">
-                <p>Analyzing PDF and generating recommendations...</p>
-            </div>
-            <div id="final-results" class="results-content hidden">
-                <!-- Dynamic content will be injected here -->
-            </div>
-        </div>
-    </div>
+<!-- Student Name -->
+<div class="form-group">
 
-    <!-- Link to JS -->
-    <script src="get-started.js"></script>
+<label for="studentName">Student Name</label>
+
+<input type="text"
+id="studentName"
+name="studentName"
+placeholder="Enter your name"
+required>
+
+</div>
+
+
+<!-- Age -->
+<div class="form-group">
+
+<label for="age">Age</label>
+
+<input type="number"
+id="age"
+name="age"
+min="5"
+max="100"
+placeholder="e.g. 12"
+required>
+
+</div>
+
+
+
+<!-- Learning Difficulties -->
+<div class="form-group">
+
+<label>Learning Difficulties (Select all that apply)</label>
+
+<div class="checkbox-group">
+
+<label class="checkbox-label">
+<input type="checkbox" name="difficulty" value="ADHD">
+<span>ADHD (Difficulty focusing)</span>
+</label>
+
+<label class="checkbox-label">
+<input type="checkbox" name="difficulty" value="Dyslexia">
+<span>Dyslexia (Reading difficulty)</span>
+</label>
+
+<label class="checkbox-label">
+<input type="checkbox" name="difficulty" value="SlowReading">
+<span>Slow Reading Speed</span>
+</label>
+
+<label class="checkbox-label">
+<input type="checkbox" name="difficulty" value="LongText">
+<span>Difficulty Understanding Long Text</span>
+</label>
+
+</div>
+</div>
+
+
+
+<!-- Upload PDF -->
+<div class="form-group">
+
+<label for="pdfUpload">Upload Learning Material (PDF)</label>
+
+<input type="file"
+id="pdfUpload"
+name="pdfUpload"
+accept=".pdf"
+required>
+
+<small id="file-name-display">No file chosen</small>
+
+</div>
+
+
+
+<!-- Analyze Button -->
+<button type="submit" id="analyzeBtn">
+Analyze
+</button>
+
+
+<!-- ======================= -->
+<!-- Progress Bar (NEW) -->
+<!-- ======================= -->
+
+<div id="progressContainer" style="display:none; margin-top:20px;">
+
+<div style="width:100%; background:#e0e0e0; border-radius:10px; overflow:hidden;">
+
+<div id="progressBar"
+style="width:0%; height:20px; background:#5d9cec; transition:width 0.4s;">
+</div>
+
+</div>
+
+<p id="progressText"
+style="margin-top:8px; font-size:14px; color:#555;">
+0% - Starting analysis...
+</p>
+
+</div>
+
+</form>
+
+
+
+<!-- Results Area -->
+<div id="results-area" class="hidden">
+
+<h2>Your Personalized Analysis</h2>
+
+<div id="loading-spinner" class="hidden">
+
+<p>Analyzing PDF and generating recommendations...</p>
+
+</div>
+
+<div id="final-results" class="results-content hidden">
+
+</div>
+
+</div>
+
+
+</div>
+
+
+<!-- PDF.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+<!-- JS -->
+<script src="./get-started.js"></script>
+
 </body>
 </html>

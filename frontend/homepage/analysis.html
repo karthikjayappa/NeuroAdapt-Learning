@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analysis Result | NeuroAdapt Edu</title>
+    <style>
+        /* --- CSS VARIABLES & RESET --- */
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --secondary: #64748b;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-light: #64748b;
+            --border: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --radius: 12px;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding-bottom: 40px;
+        }
+
+        /* --- NAVIGATION --- */
+        .navbar {
+            background: var(--card-bg);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .btn-home {
+            text-decoration: none;
+            background: var(--bg);
+            color: var(--text-main);
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius);
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+        .btn-home:hover {
+            background: var(--border);
+        }
+
+        /* --- CONTAINER --- */
+        .container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        /* --- LOADING SCREEN --- */
+        .loader-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 0.5s ease;
+        }
+
+        .loader-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid var(--border);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* --- CARDS & SECTIONS --- */
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            transition: var(--transition);
+        }
+
+        .card:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h2 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 0.5rem;
+        }
+
+        /* --- SUMMARY SECTION --- */
+        .summary-text {
+            font-size: 1.1rem;
+            color: var(--text-main);
+        }
+
+        /* --- LISTS (CONCEPTS & TIPS) --- */
+        .concept-list, .tips-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .concept-list li, .tips-list li {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+        }
+
+        .concept-list li:last-child, .tips-list li:last-child {
+            border-bottom: none;
+        }
+
+        .concept-list li::before, .tips-list li::before {
+            content: "•";
+            color: var(--primary);
+            font-weight: bold;
+            margin-right: 10px;
+            font-size: 1.2rem;
+        }
+
+        /* --- QUIZ SECTION --- */
+        .quiz-item {
+            background: var(--bg);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .quiz-item strong {
+            color: var(--primary);
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .answer-reveal {
+            margin-top: 0.5rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid var(--border);
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        /* --- FLASHCARDS --- */
+        .flashcard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .flashcard {
+            background-color: transparent;
+            width: 100%;
+            height: 200px;
+            perspective: 1000px;
+            cursor: pointer;
+        }
+
+        .flashcard-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            box-shadow: var(--shadow);
+            border-radius: var(--radius);
+        }
+
+        .flashcard.flipped .flashcard-inner {
+            transform: rotateY(180deg);
+        }
+
+        .flashcard-front, .flashcard-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            border-radius: var(--radius);
+        }
+
+        .flashcard-front {
+            background-color: var(--card-bg);
+            color: var(--text-main);
+            border: 2px solid var(--primary);
+        }
+
+        .flashcard-back {
+            background-color: var(--primary);
+            color: white;
+            transform: rotateY(180deg);
+        }
+
+        /* --- ERROR MESSAGE --- */
+        .error-message {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 1rem;
+            border-radius: var(--radius);
+            text-align: center;
+            margin-top: 2rem;
+        }
+
+        /* --- RESPONSIVE --- */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 1rem;
+            }
+            
+            .card {
+                padding: 1.5rem;
+            }
+
+            .flashcard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <a href="index.html" class="logo">NeuroAdapt Edu</a>
+        <a href="index.html" class="btn-home">Upload New</a>
+    </nav>
+
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="loader-overlay">
+        <div class="spinner"></div>
+        <h2>Analyzing your study material using AI...</h2>
+        <p>Extracting concepts, generating quizzes, and creating flashcards.</p>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container hidden" id="result-container">
+        <h1>📚 Analysis Results</h1>
+        
+        <!-- Summary Section -->
+        <section class="card">
+            <h2>📄 Summary</h2>
+            <p id="summary-text" class="summary-text"></p>
+        </section>
+
+        <div class="grid-layout">
+            <!-- Key Concepts -->
+            <div class="card">
+                <h2>🧠 Key Concepts</h2>
+                <ul id="concepts-list" class="concept-list"></ul>
+            </div>
+
+            <!-- Study Tips -->
+            <div class="card">
+                <h2>💡 Study Tips</h2>
+                <ul id="tips-list" class="tips-list"></ul>
+            </div>
+        </div>
+
+        <!-- Quiz Section -->
+        <section class="card">
+            <h2>📝 Quiz Questions</h2>
+            <div id="quiz-container" class="quiz-list"></div>
+        </section>
+
+        <!-- Flashcards Section -->
+        <section class="card">
+            <h2>🃏 Flashcards</h2>
+            <p class="hint" style="color: var(--text-light); margin-bottom: 1rem;">Click a card to flip it.</p>
+            <div id="flashcards-container" class="flashcard-grid"></div>
+        </section>
+    </div>
+
+    <!-- Error Message -->
+    <div id="error-message" class="error-message hidden">
+        <h3>⚠️ Error Loading Data</h3>
+        <p>Please upload a document first.</p>
+        <a href="index.html" class="btn-home" style="margin-top: 1rem; display: inline-block;">Go to Upload</a>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check if we have data passed via URL (optional, or fetch from API)
+            // For this implementation, we assume the user uploads on index.html and redirects here.
+            // However, to make this robust, we will fetch the data from the API if a file ID exists,
+            // OR we can simply assume the user uploaded the file and we need to process it.
+            
+            // NOTE: Since the user flow is usually Upload -> API -> Redirect, 
+            // we need to pass the file or the result. 
+            // For this specific upgrade, let's assume the user uploads on index.html, 
+            // the backend processes it, and redirects to analysis.html with the result in the URL query params 
+            // OR we simply re-fetch the result.
+            
+            // SIMPLIFIED FLOW: 
+            // 1. User uploads on index.html.
+            // 2. index.html sends POST to /api/analyze.
+            // 3. index.html receives JSON.
+            // 4. index.html redirects to analysis.html?data=[base64_json_string]
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            const dataString = urlParams.get('data');
+
+            if (dataString) {
+                try {
+                    const analysisData = JSON.parse(decodeURIComponent(dataString));
+                    renderAnalysis(analysisData);
+                } catch (e) {
+                    console.error("Error parsing data", e);
+                    showError();
+                }
+            } else {
+                // Fallback if no data passed (e.g. direct access)
+                document.getElementById('loading-screen').classList.remove('hidden');
+                // In a real app, you might redirect back to index.html here
+                setTimeout(() => {
+                    showError();
+                }, 1000);
+            }
+        });
+
+        function renderAnalysis(data) {
+            // Hide loader, show content
+            document.getElementById('loading-screen').classList.add('hidden');
+            document.getElementById('result-container').classList.remove('hidden');
+
+            // 1. Render Summary
+            document.getElementById('summary-text').textContent = data.summary;
+
+            // 2. Render Key Concepts
+            const conceptsList = document.getElementById('concepts-list');
+            data.keyConcepts.forEach(concept => {
+                const li = document.createElement('li');
+                li.textContent = concept;
+                conceptsList.appendChild(li);
+            });
+
+            // 3. Render Study Tips
+            const tipsList = document.getElementById('tips-list');
+            data.studyTips.forEach(tip => {
+                const li = document.createElement('li');
+                li.textContent = tip;
+                tipsList.appendChild(li);
+            });
+
+            // 4. Render Quiz Questions
+            const quizContainer = document.getElementById('quiz-container');
+            data.quizQuestions.forEach((q, index) => {
+                const qDiv = document.createElement('div');
+                qDiv.className = 'quiz-item';
+                qDiv.innerHTML = `
+                    <strong>Q${index + 1}:</strong> ${q}
+                    <div class="answer-reveal">
+                        <em>(Answer: ${q} - Try to recall the answer before reading!)</em>
+                    </div>
+                `;
+                quizContainer.appendChild(qDiv);
+            });
+
+            // 5. Render Flashcards
+            const flashContainer = document.getElementById('flashcards-container');
+            // We will use Key Concepts as Flashcards for simplicity
+            data.keyConcepts.forEach(concept => {
+                const card = document.createElement('div');
+                card.className = 'flashcard';
+                card.innerHTML = `
+                    <div class="flashcard-inner">
+                        <div class="flashcard-front">
+                            <strong>${concept}</strong>
+                        </div>
+                        <div class="flashcard-back">
+                            <p>Review this concept in your own words.</p>
+                        </div>
+                    </div>
+                `;
+                flashContainer.appendChild(card);
+            });
+
+            // Add click event for flashcards
+            document.querySelectorAll('.flashcard').forEach(card => {
+                card.addEventListener('click', () => {
+                    card.classList.toggle('flipped');
+                });
+            });
+        }
+
+        function showError() {
+            document.getElementById('loading-screen').classList.add('hidden');
+            document.getElementById('error-message').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
