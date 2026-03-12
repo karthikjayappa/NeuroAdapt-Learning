@@ -5,7 +5,7 @@
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
-const fetch = (...args) => import("node-fetch").then(({default: fetch}) => fetch(...args));
+const fetch = (...args) => import("node-fetch").then(({ default: fetch }) => fetch(...args));
 
 dotenv.config();
 
@@ -33,7 +33,6 @@ function splitText(text, chunkSize = 800) {
     }
 
     return chunks;
-
 }
 
 // ============================================
@@ -56,7 +55,6 @@ async function createEmbedding(text) {
     const data = await response.json();
 
     return data.embedding;
-
 }
 
 // ============================================
@@ -75,9 +73,7 @@ async function storeChunks(chunks) {
             text: chunk,
             embedding: embedding
         });
-
     }
-
 }
 
 // ============================================
@@ -95,11 +91,9 @@ function cosineSimilarity(a, b) {
         dotProduct += a[i] * b[i];
         normA += a[i] * a[i];
         normB += b[i] * b[i];
-
     }
 
     return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
-
 }
 
 // ============================================
@@ -118,13 +112,11 @@ async function retrieveChunks(queryText) {
             text: chunk.text,
             score: score
         };
-
     });
 
     scoredChunks.sort((a, b) => b.score - a.score);
 
     return scoredChunks.slice(0, 3).map(c => c.text);
-
 }
 
 // ============================================
@@ -132,6 +124,10 @@ async function retrieveChunks(queryText) {
 // ============================================
 
 async function callOllama(prompt) {
+
+    const model = process.env.LLM_MODEL || "phi3";
+
+    console.log("Using Model:", model);
 
     const response = await fetch("http://localhost:11434/api/generate", {
 
@@ -142,17 +138,17 @@ async function callOllama(prompt) {
         },
 
         body: JSON.stringify({
-            model: process.env.LLM_MODEL || "phi3",
+            model: model,
             prompt: prompt,
             stream: false
         })
-
     });
 
     const data = await response.json();
 
-    return data.response;
+    console.log("Ollama Raw Response:", data);
 
+    return data.response || "";
 }
 
 // ============================================
@@ -166,7 +162,6 @@ app.get("/api/health", (req, res) => {
         message: "NeuroAdapt Edu API running",
         time: new Date()
     });
-
 });
 
 // ============================================
@@ -189,11 +184,16 @@ app.post("/api/analyze", async (req, res) => {
         // STEP 2: CREATE EMBEDDINGS
         await storeChunks(chunks);
 
-        // STEP 3: RETRIEVE MOST RELEVANT CHUNKS
-        const relevantChunks = await retrieveChunks(text);
+       // STEP 3: RETRIEVE MOST RELEVANT CHUNKS
+const relevantChunks = await retrieveChunks(text);
 
-        const context = relevantChunks.join("\n");
+// Use retrieved chunks if available, otherwise use original text
+const context =
+  relevantChunks && relevantChunks.length > 0
+    ? relevantChunks.join("\n")
+    : text;
 
+console.log("Context sent to AI:", context);
         // STEP 4: AI PROMPT
 
         const prompt = `
@@ -201,7 +201,7 @@ You are an AI study assistant.
 
 Analyze the learning material below.
 
-Return JSON only in this format:
+Return ONLY valid JSON in this format:
 
 {
  "summary": "short summary",
@@ -222,17 +222,24 @@ ${context}
 
         try {
 
-            parsed = JSON.parse(aiResponse);
+            const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
 
-        } catch {
+            if (jsonMatch) {
+                parsed = JSON.parse(jsonMatch[0]);
+            } else {
+                throw new Error("JSON not found");
+            }
+
+        } catch (err) {
+
+            console.log("AI returned non-JSON output:", aiResponse);
 
             parsed = {
-                summary: aiResponse,
+                summary: aiResponse || "No summary generated.",
                 keyConcepts: [],
                 quizQuestions: [],
                 studyTips: []
             };
-
         }
 
         res.json({
@@ -247,9 +254,7 @@ ${context}
         res.status(500).json({
             error: "AI processing failed"
         });
-
     }
-
 });
 
 // ============================================
@@ -261,7 +266,6 @@ app.use((req, res) => {
     res.status(404).json({
         error: "Endpoint not found"
     });
-
 });
 
 // ============================================
