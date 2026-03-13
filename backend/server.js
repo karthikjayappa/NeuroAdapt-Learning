@@ -1,5 +1,5 @@
 // ============================================
-// NeuroAdapt Edu - Backend Server (RAG + Cosine Similarity)
+// NeuroAdapt Edu - Backend Server (Professional Chatbot)
 // ============================================
 
 const express = require("express");
@@ -10,280 +10,127 @@ const fetch = (...args) => import("node-fetch").then(({ default: fetch }) => fet
 dotenv.config();
 
 const app = express();
-
 app.use(cors());
 app.use(express.json({ limit: "50mb" }));
 
 // ============================================
-// VECTOR STORE (IN MEMORY)
+// MULTI-TURN CHAT HISTORY (OPTIONAL)
 // ============================================
-
-let vectorStore = [];
-
-// ============================================
-// TEXT CHUNKING
-// ============================================
-
-function splitText(text, chunkSize = 800) {
-
-    const chunks = [];
-
-    for (let i = 0; i < text.length; i += chunkSize) {
-        chunks.push(text.substring(i, i + chunkSize));
-    }
-
-    return chunks;
-}
+let conversationHistory = []; // optional, can remove if not needed
+const MAX_HISTORY = 3; // only keep last 3 AI + 3 user for very short context
 
 // ============================================
-// CREATE EMBEDDING
+// CALL OLLAMA
 // ============================================
-
-async function createEmbedding(text) {
-
-    const response = await fetch("http://localhost:11434/api/embeddings", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            model: "nomic-embed-text",
-            prompt: text
-        })
-    });
-
-    const data = await response.json();
-
-    return data.embedding;
-}
-
-// ============================================
-// STORE CHUNKS + EMBEDDINGS
-// ============================================
-
-async function storeChunks(chunks) {
-
-    vectorStore = [];
-
-    for (const chunk of chunks) {
-
-        const embedding = await createEmbedding(chunk);
-
-        vectorStore.push({
-            text: chunk,
-            embedding: embedding
-        });
-    }
-}
-
-// ============================================
-// COSINE SIMILARITY
-// ============================================
-
-function cosineSimilarity(a, b) {
-
-    let dotProduct = 0;
-    let normA = 0;
-    let normB = 0;
-
-    for (let i = 0; i < a.length; i++) {
-
-        dotProduct += a[i] * b[i];
-        normA += a[i] * a[i];
-        normB += b[i] * b[i];
-    }
-
-    return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
-}
-
-// ============================================
-// SMART CHUNK RETRIEVAL
-// ============================================
-
-async function retrieveChunks(queryText) {
-
-    const queryEmbedding = await createEmbedding(queryText);
-
-    const scoredChunks = vectorStore.map(chunk => {
-
-        const score = cosineSimilarity(queryEmbedding, chunk.embedding);
-
-        return {
-            text: chunk.text,
-            score: score
-        };
-    });
-
-    scoredChunks.sort((a, b) => b.score - a.score);
-
-    return scoredChunks.slice(0, 3).map(c => c.text);
-}
-
-// ============================================
-// CALL OLLAMA LLM
-// ============================================
-
 async function callOllama(prompt) {
+  try {
+    console.log("Prompt sent to Ollama:\n", prompt);
 
     const model = process.env.LLM_MODEL || "phi3";
-
-    console.log("Using Model:", model);
-
     const response = await fetch("http://localhost:11434/api/generate", {
-
-        method: "POST",
-
-        headers: {
-            "Content-Type": "application/json"
-        },
-
-        body: JSON.stringify({
-            model: model,
-            prompt: prompt,
-            stream: false
-        })
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ model, prompt, stream: false })
     });
 
     const data = await response.json();
+    console.log("Ollama Raw Response:\n", data);
 
-    console.log("Ollama Raw Response:", data);
-
-    return data.response || "";
+    return data.response || "Sorry, I couldn't generate a response.";
+  } catch (err) {
+    console.error("Ollama call error:", err);
+    return "Sorry, AI service is unavailable.";
+  }
 }
 
 // ============================================
 // HEALTH CHECK
 // ============================================
-
 app.get("/api/health", (req, res) => {
-
-    res.json({
-        status: "OK",
-        message: "NeuroAdapt Edu API running",
-        time: new Date()
-    });
+  res.json({
+    status: "OK",
+    message: "NeuroAdapt Edu Professional Chatbot API running",
+    time: new Date()
+  });
 });
 
 // ============================================
-// MAIN ANALYSIS API
+// CHATBOT ENDPOINT
 // ============================================
-
 app.post("/api/analyze", async (req, res) => {
+  try {
+    const { text, mode } = req.body; // mode: "independent" or "multi-turn"
+    if (!text) return res.status(400).json({ error: "No text provided" });
 
-    try {
+    let prompt = "";
 
-        const { text } = req.body;
+    if (mode === "independent" || !mode) {
+      // always concise, no history
+      prompt = `You are a professional AI assistant. Answer the user's question directly and concisely (1–3 sentences). Do NOT reference previous answers. Question: ${text}`;
+    } else {
+      // optional multi-turn (very short history)
+      conversationHistory.push({ role: "user", content: text });
+      if (conversationHistory.length > MAX_HISTORY) {
+        conversationHistory = conversationHistory.slice(-MAX_HISTORY);
+      }
 
-        if (!text) {
-            return res.status(400).json({ error: "No text provided" });
-        }
+      prompt = `
+You are a professional AI assistant.
+- Keep answers concise: 1-3 sentences maximum.
+- Only answer what the user asks.
+- Do NOT reference previous answers.
+- Maintain a friendly, professional tone.
 
-        // STEP 1: SPLIT TEXT
-        const chunks = splitText(text);
-
-        // STEP 2: CREATE EMBEDDINGS
-        await storeChunks(chunks);
-
-       // STEP 3: RETRIEVE MOST RELEVANT CHUNKS
-const relevantChunks = await retrieveChunks(text);
-
-// Use retrieved chunks if available, otherwise use original text
-const context =
-  relevantChunks && relevantChunks.length > 0
-    ? relevantChunks.join("\n")
-    : text;
-
-console.log("Context sent to AI:", context);
-        // STEP 4: AI PROMPT
-
-        const prompt = `
-You are an AI study assistant.
-
-Analyze the learning material below.
-
-Return ONLY valid JSON in this format:
-
-{
- "summary": "short summary",
- "keyConcepts": ["concept1","concept2","concept3"],
- "quizQuestions": ["question1","question2","question3"],
- "studyTips": ["tip1","tip2"]
-}
-
-Content:
-${context}
+Conversation history:
 `;
+      conversationHistory.forEach(msg => {
+        prompt += `${msg.role === "user" ? "User" : "AI"}: ${msg.content}\n`;
+      });
 
-        // STEP 5: CALL AI
-
-        const aiResponse = await callOllama(prompt);
-
-        let parsed;
-
-        try {
-
-            const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
-
-            if (jsonMatch) {
-                parsed = JSON.parse(jsonMatch[0]);
-            } else {
-                throw new Error("JSON not found");
-            }
-
-        } catch (err) {
-
-            console.log("AI returned non-JSON output:", aiResponse);
-
-            parsed = {
-                summary: aiResponse || "No summary generated.",
-                keyConcepts: [],
-                quizQuestions: [],
-                studyTips: []
-            };
-        }
-
-        res.json({
-            success: true,
-            analysis: parsed
-        });
-
-    } catch (error) {
-
-        console.error("AI ERROR:", error);
-
-        res.status(500).json({
-            error: "AI processing failed"
-        });
+      prompt += "AI:";
     }
+
+    const aiResponse = await callOllama(prompt);
+
+    // Store in history only for multi-turn
+    if (mode && mode !== "independent") {
+      conversationHistory.push({ role: "ai", content: aiResponse });
+    }
+
+    res.json({ success: true, response: aiResponse });
+
+  } catch (error) {
+    console.error("AI ERROR:", error);
+    res.status(500).json({ error: "AI processing failed" });
+  }
+});
+
+// ============================================
+// RESET CHAT HISTORY
+// ============================================
+app.post("/api/reset", (req, res) => {
+  conversationHistory = [];
+  res.json({ success: true, message: "Conversation history cleared." });
 });
 
 // ============================================
 // 404 HANDLER
 // ============================================
-
 app.use((req, res) => {
-
-    res.status(404).json({
-        error: "Endpoint not found"
-    });
+  res.status(404).json({ error: "Endpoint not found" });
 });
 
 // ============================================
 // START SERVER
 // ============================================
-
 const PORT = process.env.PORT || 3000;
-
 app.listen(PORT, () => {
-
-console.log(`
+  console.log(`
 =========================================
-NeuroAdapt Edu Backend Running
+NeuroAdapt Edu Professional Chatbot Running
 Port: ${PORT}
 Model: ${process.env.LLM_MODEL || "phi3"}
-RAG: ENABLED
-Cosine Similarity: ENABLED
+Responses: concise & professional by default
 =========================================
 `);
-
 });
