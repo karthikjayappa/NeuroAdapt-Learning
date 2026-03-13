@@ -24,28 +24,21 @@ NeuroAdapt Edu helps you study smarter. Upload your learning material and select
 
 </header>
 
-
 <form id="needsForm">
 
 <!-- Student Name -->
 <div class="form-group">
-
 <label for="studentName">Student Name</label>
-
 <input type="text"
 id="studentName"
 name="studentName"
 placeholder="Enter your name"
 required>
-
 </div>
-
 
 <!-- Age -->
 <div class="form-group">
-
 <label for="age">Age</label>
-
 <input type="number"
 id="age"
 name="age"
@@ -53,111 +46,73 @@ min="5"
 max="100"
 placeholder="e.g. 12"
 required>
-
 </div>
-
-
 
 <!-- Learning Difficulties -->
 <div class="form-group">
-
-<label>Learning Difficulties (Select all that apply)</label>
-
+<label>Learning Difficulties (Choose one)</label>
 <div class="checkbox-group">
 
 <label class="checkbox-label">
-<input type="checkbox" name="difficulty" value="ADHD">
+<input type="radio" name="difficulty" value="ADHD" required>
 <span>ADHD (Difficulty focusing)</span>
 </label>
 
 <label class="checkbox-label">
-<input type="checkbox" name="difficulty" value="Dyslexia">
+<input type="radio" name="difficulty" value="Dyslexia" required>
 <span>Dyslexia (Reading difficulty)</span>
 </label>
 
-<label class="checkbox-label">
-<input type="checkbox" name="difficulty" value="SlowReading">
-<span>Slow Reading Speed</span>
-</label>
-
-<label class="checkbox-label">
-<input type="checkbox" name="difficulty" value="LongText">
-<span>Difficulty Understanding Long Text</span>
-</label>
-
 </div>
 </div>
-
-
 
 <!-- Upload PDF -->
 <div class="form-group">
-
 <label for="pdfUpload">Upload Learning Material (PDF)</label>
-
 <input type="file"
 id="pdfUpload"
 name="pdfUpload"
 accept=".pdf"
 required>
-
 <small id="file-name-display">No file chosen</small>
-
 </div>
-
-
 
 <!-- Analyze Button -->
 <button type="submit" id="analyzeBtn">
 Analyze
 </button>
 
-
 <!-- ======================= -->
 <!-- Progress Bar (NEW) -->
 <!-- ======================= -->
-
 <div id="progressContainer" style="display:none; margin-top:20px;">
-
 <div style="width:100%; background:#e0e0e0; border-radius:10px; overflow:hidden;">
-
 <div id="progressBar"
 style="width:0%; height:20px; background:#5d9cec; transition:width 0.4s;">
 </div>
-
 </div>
 
 <p id="progressText"
 style="margin-top:8px; font-size:14px; color:#555;">
 0% - Starting analysis...
 </p>
-
 </div>
 
 </form>
 
-
-
 <!-- Results Area -->
 <div id="results-area" class="hidden">
-
 <h2>Your Personalized Analysis</h2>
 
 <div id="loading-spinner" class="hidden">
-
 <p>Analyzing PDF and generating recommendations...</p>
-
 </div>
 
 <div id="final-results" class="results-content hidden">
-
+</div>
 </div>
 
 </div>
-
-
-</div>
-
 
 <!-- PDF.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>

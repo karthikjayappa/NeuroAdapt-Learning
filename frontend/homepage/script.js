@@ -1,55 +1,83 @@
-document.addEventListener('DOMContentLoaded', () => {
-    
-    // --- Mobile Menu Toggle ---
-    const mobileBtn = document.querySelector('.mobile-menu-btn');
-    const nav = document.querySelector('.main-nav');
+// ============================================
+// NeuroAdapt AI Chatbot - script.js
+// ============================================
 
-    mobileBtn.addEventListener('click', () => {
-        nav.classList.toggle('active');
+const chat = document.getElementById("chat");
+const userInput = document.getElementById("user-input");
+const sendBtn = document.getElementById("send-btn");
+const resetBtn = document.getElementById("reset-btn");
+
+// Append message to chat window
+function appendMessage(text, sender) {
+  const msg = document.createElement("div");
+  msg.classList.add("message", sender);
+  msg.textContent = text;
+  chat.appendChild(msg);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+// Show "AI is typing..." indicator
+function showTypingIndicator() {
+  const typing = document.createElement("div");
+  typing.id = "typing-indicator";
+  typing.classList.add("message", "ai");
+  typing.textContent = "AI is typing...";
+  chat.appendChild(typing);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+// Remove typing indicator
+function removeTypingIndicator() {
+  const typing = document.getElementById("typing-indicator");
+  if (typing) typing.remove();
+}
+
+// Send user message to backend
+async function sendMessage() {
+  const text = userInput.value.trim();
+  if (!text) return;
+
+  appendMessage(text, "user");
+  userInput.value = "";
+
+  showTypingIndicator();
+
+  try {
+    const res = await fetch("http://localhost:3000/api/analyze", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text })
     });
+    const data = await res.json();
 
-    // Close menu when a link is clicked
-    document.querySelectorAll('.main-nav a').forEach(link => {
-        link.addEventListener('click', () => {
-            nav.classList.remove('active');
-        });
-    });
+    removeTypingIndicator();
 
-    // --- Smooth Scrolling for Anchor Links ---
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function (e) {
-            e.preventDefault();
-            const targetId = this.getAttribute('href');
-            const targetElement = document.querySelector(targetId);
+    if (data.success) {
+      appendMessage(data.response, "ai");
+    } else {
+      appendMessage("Error: " + (data.error || "No response"), "ai");
+    }
+  } catch (err) {
+    removeTypingIndicator();
+    appendMessage("Error: Could not reach AI.", "ai");
+    console.error("Fetch error:", err);
+  }
+}
 
-            if (targetElement) {
-                // Account for fixed header height
-                const headerOffset = 70; 
-                const elementPosition = targetElement.getBoundingClientRect().top;
-                const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+// Reset chat both frontend and backend
+async function resetChat() {
+  try {
+    await fetch("http://localhost:3000/api/reset", { method: "POST" });
+    chat.innerHTML = "";
+  } catch (err) {
+    appendMessage("Error: Could not reset chat.", "ai");
+    console.error("Reset error:", err);
+  }
+}
 
-                window.scrollTo({
-                    top: offsetPosition,
-                    behavior: "smooth"
-                });
-            }
-        });
-    });
-
-    // --- Simple Form Submission Handler ---
-    const contactForm = document.getElementById('contactForm');
-    
-    contactForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        
-        // Get values (in a real app, you would send these to a server)
-        const name = document.getElementById('name').value;
-        
-        // Simple alert to simulate submission
-        alert(`Thank you, ${name}! Your message has been sent to NeuroAdapt Edu.`);
-        
-        // Reset form
-        contactForm.reset();
-    });
-
+// Event listeners
+sendBtn.addEventListener("click", sendMessage);
+resetBtn.addEventListener("click", resetChat);
+userInput.addEventListener("keypress", e => {
+  if (e.key === "Enter") sendMessage();
 });
