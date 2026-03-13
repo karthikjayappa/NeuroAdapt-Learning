@@ -1,33 +1,117 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>NeuroAdapt AI Chatbot</title>
-  <link rel="stylesheet" href="style.css">
-  <style>
-    body { font-family: sans-serif; margin: 20px; background: #f9f9f9; }
-    h2 { text-align: center; }
-    #chat { 
-      border: 1px solid #ccc; 
-      padding: 10px; 
-      height: 400px; 
-      overflow-y: auto; 
-      display: flex; 
-      flex-direction: column; 
-      background: #fff;
-    }
-    .message { margin: 5px 0; padding: 8px 12px; border-radius: 8px; max-width: 70%; word-wrap: break-word; }
-    .user { background-color: #dcf8c6; align-self: flex-end; }
-    .ai { background-color: #f1f0f0; align-self: flex-start; }
-    #input-area { margin-top: 10px; display: flex; gap: 5px; }
-    #input-area input { flex: 1; padding: 8px; border-radius: 4px; border: 1px solid #ccc; }
-    #input-area button { padding: 8px 12px; border-radius: 4px; border: none; background-color: #007bff; color: white; cursor: pointer; }
-    #input-area button:hover { background-color: #0056b3; }
-    #loading { display: none; font-style: italic; color: #555; margin-top: 5px; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NeuroAdapt Edu - PDF & Chat</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+  body {
+    margin: 0;
+    font-family: sans-serif;
+    height: 100vh;
+    display: flex;
+    background: #f4f9fc;
+  }
+
+  /* LEFT: PDF Text */
+  #pdf-text-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    border-right: 1px solid #ccc;
+    background: #fff;
+  }
+
+  #pdf-text-container h2 {
+    margin-bottom: 15px;
+    color: #2c3e50;
+  }
+
+  #pdf-text {
+    white-space: pre-wrap;
+    font-size: 16px;
+    color: #333;
+  }
+
+  /* RIGHT: Chatbot */
+  #chatbot-container {
+    width: 350px;
+    display: flex;
+    flex-direction: column;
+    border-left: 1px solid #ccc;
+    background: #f9f9f9;
+    height: 100vh;
+    position: relative;
+  }
+
+  #chat-header {
+    text-align: center;
+    padding: 10px;
+    font-weight: bold;
+    background: #5d9cec;
+    color: white;
+  }
+
+  #chat {
+    flex: 1;
+    padding: 10px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+  }
+
+  .message {
+    margin: 5px 0;
+    padding: 8px 12px;
+    border-radius: 8px;
+    max-width: 70%;
+    word-wrap: break-word;
+  }
+
+  .user { background-color: #dcf8c6; align-self: flex-end; }
+  .ai { background-color: #f1f0f0; align-self: flex-start; }
+
+  #input-area {
+    display: flex;
+    padding: 10px;
+    gap: 5px;
+    border-top: 1px solid #ccc;
+    background: #f1f1f1;
+  }
+
+  #input-area input {
+    flex: 1;
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+  }
+
+  #input-area button {
+    padding: 8px 12px;
+    border-radius: 4px;
+    border: none;
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+  }
+
+  #input-area button:hover { background-color: #0056b3; }
+  #loading { display: none; font-style: italic; color: #555; margin-top: 5px; }
+</style>
 </head>
 <body>
-  <h2>NeuroAdapt AI Chatbot</h2>
+
+<!-- LEFT SIDE: PDF Text -->
+<div id="pdf-text-container">
+  <h2>PDF Content:</h2>
+  <pre id="pdf-text">Upload a PDF to display its content here...</pre>
+</div>
+
+<!-- RIGHT SIDE: Chatbot -->
+<div id="chatbot-container">
+  <div id="chat-header">NeuroAdapt AI Chatbot</div>
   <div id="chat"></div>
   <div id="loading">AI is typing...</div>
   <div id="input-area">
@@ -35,66 +119,96 @@
     <button id="send-btn">Send</button>
     <button id="reset-btn">Reset Chat</button>
   </div>
+</div>
 
-  <script>
-    const chat = document.getElementById('chat');
-    const input = document.getElementById('user-input');
-    const sendBtn = document.getElementById('send-btn');
-    const resetBtn = document.getElementById('reset-btn');
-    const loading = document.getElementById('loading');
+<!-- Hidden file input -->
+<input type="file" id="pdfUpload" accept=".pdf" style="display:none;">
 
-    // Append message to chat
-    function appendMessage(text, sender) {
-      const msg = document.createElement('div');
-      msg.className = 'message ' + sender;
-      msg.textContent = text;
-      chat.appendChild(msg);
-      chat.scrollTop = chat.scrollHeight;
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+  const pdfTextContainer = document.getElementById('pdf-text');
+  const fileInput = document.getElementById('pdfUpload');
+  const chat = document.getElementById('chat');
+  const input = document.getElementById('user-input');
+  const sendBtn = document.getElementById('send-btn');
+  const resetBtn = document.getElementById('reset-btn');
+  const loading = document.getElementById('loading');
+
+  let pdfText = "";
+
+  // Auto-open file picker on page load (optional)
+  fileInput.click();
+
+  // Extract PDF text
+  fileInput.addEventListener('change', async () => {
+    const file = fileInput.files[0];
+    if (!file) return;
+
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+    let fullText = "";
+    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+      const page = await pdf.getPage(pageNum);
+      const textContent = await page.getTextContent();
+      const pageText = textContent.items.map(item => item.str).join(" ");
+      fullText += pageText + "\n\n";
     }
 
-    // Send message to backend
-    async function sendMessage() {
-      const text = input.value.trim();
-      if (!text) return;
-      appendMessage(text, 'user');
-      input.value = '';
-      loading.style.display = 'block';
+    pdfText = fullText;
+    pdfTextContainer.textContent = pdfText;
+  });
 
-      try {
-        const res = await fetch("http://localhost:3000/api/analyze", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text })
-        });
-        const data = await res.json();
-        if (data.success) {
-          appendMessage(data.response, 'ai');
-        } else {
-          appendMessage("Error: " + (data.error || "No response"), 'ai');
-        }
-      } catch (err) {
-        appendMessage("Error: Could not reach server.", 'ai');
-      } finally {
-        loading.style.display = 'none';
-      }
+  // Chat functions
+  function appendMessage(text, sender) {
+    const msg = document.createElement('div');
+    msg.className = 'message ' + sender;
+    msg.textContent = text;
+    chat.appendChild(msg);
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+  async function sendMessage() {
+    const text = input.value.trim();
+    if (!text || !pdfText) {
+      alert("Please upload a PDF first and type a message.");
+      return;
     }
+    appendMessage(text, 'user');
+    input.value = '';
+    loading.style.display = 'block';
 
-    // Reset chat
-    async function resetChat() {
-      try {
-        await fetch("http://localhost:3000/api/reset", { method: "POST" });
-        chat.innerHTML = '';
-      } catch (err) {
-        appendMessage("Error: Could not reset chat.", 'ai');
-      }
+    try {
+      const res = await fetch("http://localhost:3000/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: pdfText + "\nUser question: " + text })
+      });
+      const data = await res.json();
+      if (data.success) appendMessage(data.response, 'ai');
+      else appendMessage("Error: " + (data.error || "No response"), 'ai');
+    } catch (err) {
+      appendMessage("Error: Could not reach server.", 'ai');
+    } finally { loading.style.display = 'none'; }
+  }
+
+  async function resetChat() {
+    try {
+      await fetch("http://localhost:3000/api/reset", { method: "POST" });
+      chat.innerHTML = '';
+    } catch (err) {
+      appendMessage("Error: Could not reset chat.", 'ai');
     }
+  }
 
-    // Event listeners
-    sendBtn.addEventListener('click', sendMessage);
-    resetBtn.addEventListener('click', resetChat);
-    input.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') sendMessage();
-    });
-  </script>
+  // Event listeners
+  sendBtn.addEventListener('click', sendMessage);
+  resetBtn.addEventListener('click', resetChat);
+  input.addEventListener('keypress', e => { if (e.key === 'Enter') sendMessage(); });
+
+});
+</script>
+
 </body>
 </html>
