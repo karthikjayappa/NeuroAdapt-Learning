@@ -192,15 +192,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
             // ==============================
-            // Redirect to analysis page
+            // Redirect to analysis page (FIXED: use sessionStorage to avoid URL length limits)
             // ==============================
-            const encoded = encodeURIComponent(JSON.stringify(resultPayload));
+            sessionStorage.setItem('neuroadapt_result', JSON.stringify(resultPayload));
 
             console.log("Redirecting to analysis.html");
 
             setTimeout(() => {
 
-                window.location.href = `analysis.html?data=${encoded}`;
+                window.location.href = `analysis.html`;
 
             }, 1000);
 

@@ -243,6 +243,54 @@
             transform: rotateY(180deg);
         }
 
+        /* --- RECOMMENDATIONS --- */
+        .rec-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .rec-list li {
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            background: #f0f4ff;
+            margin-bottom: 0.6rem;
+            font-size: 1rem;
+            color: var(--text-main);
+            border-left: 4px solid var(--primary);
+        }
+
+        /* --- QUIZ REVEAL BUTTON --- */
+        .reveal-btn {
+            margin-top: 0.5rem;
+            background: none;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            padding: 0.3rem 0.8rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: var(--transition);
+        }
+
+        .reveal-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .answer-reveal {
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: #f0fdf4;
+            border-radius: 6px;
+            color: #166534;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        .answer-reveal.visible {
+            display: block;
+        }
+
         /* --- ERROR MESSAGE --- */
         .error-message {
             background: #fee2e2;
@@ -314,6 +362,12 @@
             <div id="quiz-container" class="quiz-list"></div>
         </section>
 
+        <!-- Recommendations Section -->
+        <section class="card" id="recommendations-section">
+            <h2>🎯 Personalized Recommendations</h2>
+            <ul id="rec-list" class="rec-list"></ul>
+        </section>
+
         <!-- Flashcards Section -->
         <section class="card">
             <h2>🃏 Flashcards</h2>
@@ -348,12 +402,13 @@
             // 3. index.html receives JSON.
             // 4. index.html redirects to analysis.html?data=[base64_json_string]
             
-            const urlParams = new URLSearchParams(window.location.search);
-            const dataString = urlParams.get('data');
+            // FIXED: Read from sessionStorage instead of URL params (avoids URL length limit crashes)
+            const dataString = sessionStorage.getItem('neuroadapt_result');
 
             if (dataString) {
                 try {
-                    const analysisData = JSON.parse(decodeURIComponent(dataString));
+                    const analysisData = JSON.parse(dataString);
+                    sessionStorage.removeItem('neuroadapt_result'); // clean up after reading
                     renderAnalysis(analysisData);
                 } catch (e) {
                     console.error("Error parsing data", e);
@@ -393,21 +448,36 @@
                 tipsList.appendChild(li);
             });
 
-            // 4. Render Quiz Questions
+            // 4. Render Quiz Questions (FIXED: proper reveal button, no repeated answer)
             const quizContainer = document.getElementById('quiz-container');
             data.quizQuestions.forEach((q, index) => {
                 const qDiv = document.createElement('div');
                 qDiv.className = 'quiz-item';
                 qDiv.innerHTML = `
                     <strong>Q${index + 1}:</strong> ${q}
+                    <br>
+                    <button class="reveal-btn" onclick="toggleAnswer(this)">Show Hint</button>
                     <div class="answer-reveal">
-                        <em>(Answer: ${q} - Try to recall the answer before reading!)</em>
+                        💡 Try to recall this from your reading before checking your notes!
                     </div>
                 `;
                 quizContainer.appendChild(qDiv);
             });
 
-            // 5. Render Flashcards
+            // 5. Render Recommendations (FIXED: was missing entirely)
+            const recSection = document.getElementById('recommendations-section');
+            const recList = document.getElementById('rec-list');
+            if (data.recommendations && data.recommendations.length > 0) {
+                data.recommendations.forEach(rec => {
+                    const li = document.createElement('li');
+                    li.textContent = rec;
+                    recList.appendChild(li);
+                });
+            } else {
+                recSection.style.display = 'none';
+            }
+
+            // 6. Render Flashcards
             const flashContainer = document.getElementById('flashcards-container');
             // We will use Key Concepts as Flashcards for simplicity
             data.keyConcepts.forEach(concept => {
@@ -432,6 +502,12 @@
                     card.classList.toggle('flipped');
                 });
             });
+        }
+
+        function toggleAnswer(btn) {
+            const answerDiv = btn.nextElementSibling;
+            answerDiv.classList.toggle('visible');
+            btn.textContent = answerDiv.classList.contains('visible') ? 'Hide Hint' : 'Show Hint';
         }
 
         function showError() {
